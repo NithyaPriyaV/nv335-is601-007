@@ -1,2 +1,5 @@
-xy
+<<<HEAD
+this is another sentence
+===========
+hi 
 
