@@ -1,0 +1,72 @@
+GITHUB URL:
+https://github.com/NithyaPriyaV/nv335-is601-007/tree/PA2
+
+DOCKER URL:
+https://hub.docker.com/repository/docker/nv335/cs643programming_assignment2/general
+
+Step by Step Instructions
+Step:01) Login to the AWS Management Console and start the Laboratory.
+Step:02) We first start by creating an EMR Cluster, where the number of instances are kept as 4(core and task).
+To Accomodate all of the other library package needs we set the size as either t2.large or m4.large.
+We switch off the auto-termination and mode and let the instances have the termination protection set up.
+We make sure our spark build package is selected, for stability we use the previous versions and not the latest emr.either way it should work.
+We then create a new security key-pair and set it.
+The cluser is named as needed and we click on create cluster.
+We wait around for 10-15 minutes depending on the speed of the internet for the status to go from starting to waiting.
+Step:03) After the cluster is created, we change the security groups--> edit inbound rules and set the ssh from our ip address.
+Step:04) We then move to S3 bucket dashboard page, create a bucket called pa2-wine.
+We then import our program codes i.e.,training_code.py and prediction_code.py and the two datasets i.e., TrainingDataset.csv and ValidationDataset.csv
+Step:05) We then use Putty, to login to our master instance: where in the putty,
+we keep the host as <public-dns-of-ec2>.username as hadoop
+We make sure the time between keep-alives is 20000 to avoid connection-timeouts.
+We then go through Connection --> ssh --> auth--> credentials --> and import our private key file created for cluster.
+
+Without Docker:
+Step:06) After logging in we install the openjdk,python3,py4j,findspark into our ec2 environments using the following commands:
+    sudo yum update -y
+    sudo yum install openjdk-8-jdk
+    sudo yum install python3.8
+    sudo pip install --upgrade pip
+    sudo pip install py4j
+    sudo pip install findspark
+    wget http://archive.apache.org/dist/spark/spark-3.0.0/spark-3.0.0-bin-hadoop2.7.tgz
+    sudo tar -zxvf spark-3.0.0-bin-hadoop2.7.tgz
+    sudo pip install pandas
+    sudo pip install scikit-learn
+Step:07)We then start training our model by executing the training_code.py from the s3 bucket using the command:
+    spark-submit --packages org.apache.hadoop:hadoop-aws:2.7.7 s3://pa2-wine/training_code.py
+Step:08)We should have a training_model.model displayed in the s3 bucket as well as output accuarcy on the terminal
+Step:09)We then run our prediction_code.py from the s3 bucket as well using the command:
+    spark-submit --packages org.apache.hadoop:hadoop-aws:2.7.7 s3://pa2-wine/prediction_code.py
+Step:10)The output should be displayed on the terminal with the f1 score and precision.
+
+With Docker:
+Step:11) We need to then setup our docker container from the master instance by first installing the docker software.
+    sudo yum install docker –y
+Step:12) We then start our docker container using the code and our ec2-user
+    sudo service docker start
+    sudo usermod -a -G docker ec2-user
+Step:13) We then create a directory for our image containers using the code:
+    mkdir DockerImages
+    cd MyDockerImages
+Step:14) We then create a dockerfile and add the code in it.
+    touch Dockerfile
+    nano Dockerfile
+Step:15) We then login to our docker hub using the command and enter username and password
+    sudo docker login
+
+Creating and Running the Docker Image
+Step:16) We then create our docker image using the command:
+    sudo docker build . -f Dockerfile -t nv335/cs643programming_assignment2
+Step:17) we can add a tag to our image using the command:
+    sudo docker tag nv335/cs643programming_assignment2:1.0.0 if needed
+Step:18) we then push our image to the docker hub using the command:
+    sudo docker push nv335/cs643programming_assignment2:1.0.0
+Step:19) We then login to our new EC2 instance using ssh putty command and then execute the below commands:
+    sudo yum install docker -y && sudo systemctl start docker
+    sudo docker pull nv335/cs643programming_assignment2:1.0.0
+Step:20) We then run our docker image container using the code:
+    sudo docker run -v /home/ec2-user/:/nv335 nv335/cs643programming_assignment2:1.0.0
+(there's still some error with the docker run that i'm trying to resolve so the final run statement my vary by either using a jarfile/trainingmodel or providing another argument of dataset)
+
+Thank you!
